@@ -74,6 +74,7 @@ describe('RegistrationsPage unpaid registrations', () => {
     await screen.findByText('Riya');
     expect(screen.getByText('Kabir')).toBeInTheDocument();
     expect(screen.queryByLabelText('Counsellor for Riya')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /mark .+ paid/i })).not.toBeInTheDocument();
     expect(screen.getByText('Bilal')).toBeInTheDocument();
     expect(screen.getByText('Unassigned')).toBeInTheDocument();
   });
@@ -135,5 +136,22 @@ describe('RegistrationsPage unpaid registrations', () => {
     renderAt('/dashboard/registrations/unpaid');
     await screen.findByText('Riya');
     expect(screen.queryByRole('button', { name: /delete registration/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /mark .+ paid/i })).not.toBeInTheDocument();
+  });
+
+  it('lets an admin mark a registration paid and removes it from the unpaid list', async () => {
+    apiMock.post.mockResolvedValue({ data: { message: 'Registration marked paid', registrationFeePaid: true } });
+    renderAt('/dashboard/registrations/unpaid');
+    await screen.findByText('Riya');
+    expect(screen.getAllByRole('button', { name: /mark .+ paid/i })).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mark Riya paid' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Mark registration paid' });
+    fireEvent.change(within(dialog).getByLabelText('Note (optional)'), { target: { value: 'Cash at the counter' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Mark paid' }));
+
+    await waitFor(() => expect(apiMock.post).toHaveBeenCalledWith('/leads/registrations/s1/mark-paid', { note: 'Cash at the counter' }));
+    await waitFor(() => expect(screen.queryByText('Riya')).not.toBeInTheDocument());
+    expect(screen.getByText('Kabir')).toBeInTheDocument();
   });
 });

@@ -6,6 +6,7 @@ import { ClipboardList, CheckCircle, XCircle, User, Phone, Mail, Award, DollarSi
 import { toast } from 'react-hot-toast';
 import RegistrationLeadModal from '../components/RegistrationLeadModal';
 import DeleteRecordButton from '../components/DeleteRecordButton';
+import MarkRegistrationPaidButton from '../components/MarkRegistrationPaidButton';
 
 const fileHref = (value) => {
   if (!String(value || '').startsWith('/uploads/')) return '';
@@ -296,9 +297,14 @@ const RegistrationsPage = () => {
                         )}
                         <td className="p-4 text-center">
                           {profile.registrationFeePaid ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                              <CheckCircle className="w-3.5 h-3.5" /> PAID
-                            </span>
+                            <div className="inline-flex flex-col items-center gap-1">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                                <CheckCircle className="w-3.5 h-3.5" /> PAID
+                              </span>
+                              {profile.registrationPaidBy?.name && !profile.currentExamPhase && (
+                                <span className="text-[10px] font-semibold text-slate-500">Marked by {profile.registrationPaidBy.name}</span>
+                              )}
+                            </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100">
                               <XCircle className="w-3.5 h-3.5" /> UNPAID
@@ -308,6 +314,9 @@ const RegistrationsPage = () => {
                         {activeTab === 'unpaid' && (
                           <td className="p-4 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              {!profile.currentExamPhase && (
+                                <MarkRegistrationPaidButton studentId={student._id} name={student.name} onPaid={() => removeStudent(student._id)} />
+                              )}
                               <button type="button" onClick={() => setDetailId(student._id)} className="whitespace-nowrap rounded-md border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-ame-orange hover:text-ame-orange">
                                 View details
                               </button>

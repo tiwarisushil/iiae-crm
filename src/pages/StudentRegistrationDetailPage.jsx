@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { ChevronLeft, ClipboardList } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../utils/api';
+import MarkRegistrationPaidButton from '../components/MarkRegistrationPaidButton';
 
 const fileHref = (value) => {
   if (!String(value || '').startsWith('/uploads/')) return '';
@@ -110,16 +111,46 @@ const StudentRegistrationDetailPage = () => {
           </h2>
           <p className="mt-1 text-xs text-slate-500">{profile.studentId || 'Roll number not generated'} · {student.email}</p>
         </div>
-        <Link to={backTo} className="btn-outline flex items-center gap-1.5">
-          <ChevronLeft className="h-4 w-4" /> Registrations
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          {!paid && (
+            <MarkRegistrationPaidButton
+              studentId={student._id}
+              name={student.name}
+              onPaid={(result) => setStudent((current) => (current ? {
+                ...current,
+                profile: {
+                  ...current.profile,
+                  registrationFeePaid: true,
+                  registrationPaidAt: result?.registrationPaidAt || new Date().toISOString(),
+                  registrationPaidNote: result?.registrationPaidNote || '',
+                  registrationPaidBy: result?.registrationPaidBy || current.profile?.registrationPaidBy,
+                },
+              } : current))}
+            />
+          )}
+          <Link to={backTo} className="btn-outline flex items-center gap-1.5">
+            <ChevronLeft className="h-4 w-4" /> Registrations
+          </Link>
+        </div>
       </div>
 
       <Panel title="Account">
         <Cell label="Phone">{show(student.phone)}</Cell>
         <Cell label="Status">{show(student.status)}</Cell>
         <Cell label="Registered">{formatDate(profile.formSubmittedAt || student.createdAt)}</Cell>
-        <Cell label="Payment">{paid ? `Paid ${formatDate(profile.registrationPaidAt)}` : 'Unpaid'}</Cell>
+        <Cell label="Payment">
+          {paid ? (
+            <>
+              Paid {formatDate(profile.registrationPaidAt)}
+              {profile.registrationPaidBy?.name && (
+                <p className="text-xs font-semibold text-slate-500">
+                  Marked by {profile.registrationPaidBy.name}
+                  {profile.registrationPaidNote ? ` · ${profile.registrationPaidNote}` : ''}
+                </p>
+              )}
+            </>
+          ) : 'Unpaid'}
+        </Cell>
         <Cell label="Fee">{profile.registrationFeeAmount ? `₹${Number(profile.registrationFeeAmount).toLocaleString('en-IN')}` : '—'}</Cell>
         <Cell label="Registered by">{show(profile.registeredBy?.name)}</Cell>
         <Cell label="Course">{show(profile.course?.name)}</Cell>
