@@ -130,17 +130,30 @@ const RegistrationsPage = () => {
   return (
     <div className="space-y-6">
       {/* Title */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-          <ClipboardList className="w-5 h-5 text-ame-orange" /> Candidate Registrations
-        </h2>
-        <p className="text-xs text-slate-500 mt-1">
-          {user?.role === 'counsellor'
-            ? (activeTab === 'unpaid'
-              ? 'Unpaid registrations assigned to you. Call them, add a remark after each call, and help them pay.'
-              : 'Students whose registration form you submitted.')
-            : 'Filled registration forms. Unpaid until the fee is marked paid. Admin and manager see every student.'}
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <ClipboardList className="w-5 h-5 text-ame-orange" /> Candidate Registrations
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            {user?.role === 'counsellor'
+              ? (activeTab === 'unpaid'
+                ? 'Unpaid registrations assigned to you. Call them, add a remark after each call, and help them pay.'
+                : 'Students whose registration form you submitted.')
+              : 'Filled registration forms. Unpaid until the fee is marked paid. Admin and manager see every student.'}
+          </p>
+        </div>
+        <div className="relative w-full shrink-0 sm:w-80">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            aria-label="Search registrations"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name, phone, email, roll no"
+            className="input-field w-full py-2 pl-8"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 border-b border-slate-200 lg:flex-row lg:items-end lg:justify-between">
@@ -166,39 +179,30 @@ const RegistrationsPage = () => {
             Unpaid<span className="hidden sm:inline"> Registrations</span>
           </button>
         </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-3 sm:flex sm:flex-wrap sm:justify-end">
-          <div className="relative col-span-3 min-w-0 sm:w-64">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              aria-label="Search registrations"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Name, phone, email, roll no"
-              className="input-field w-full py-2 pl-8"
-            />
-          </div>
+        <div className="flex flex-col gap-2 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           {(phases.phases.length > 0 || phases.hasUnphased) && (
             <select
               aria-label="Filter by exam phase"
               value={phaseFilter}
               onChange={(e) => setPhaseFilter(e.target.value)}
-              className="input-field col-span-3 min-w-0 py-2 sm:col-span-1 sm:max-w-[180px]"
+              className="input-field w-full py-2 sm:w-auto sm:min-w-[140px]"
             >
               <option value="">All phases</option>
               {phases.phases.map((phase) => <option key={phase} value={phase}>{phase}</option>)}
               {phases.hasUnphased && <option value="none">No phase (earlier)</option>}
             </select>
           )}
-          <input type="date" aria-label="Registered from" value={fromDate} max={toDate || undefined} onChange={(e) => setFromDate(e.target.value)} className="input-field min-w-0 py-2 sm:max-w-[180px]" />
-          <span className="text-xs font-semibold text-slate-500">to</span>
-          <input type="date" aria-label="Registered to" value={toDate} min={fromDate || undefined} onChange={(e) => setToDate(e.target.value)} className="input-field min-w-0 py-2 sm:max-w-[180px]" />
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex">
+            <input type="date" aria-label="Registered from" value={fromDate} max={toDate || undefined} onChange={(e) => setFromDate(e.target.value)} className="input-field min-w-0 py-2 sm:w-[150px]" />
+            <span className="text-center text-xs font-semibold text-slate-500">to</span>
+            <input type="date" aria-label="Registered to" value={toDate} min={fromDate || undefined} onChange={(e) => setToDate(e.target.value)} className="input-field min-w-0 py-2 sm:w-[150px]" />
+          </div>
           {canAssign && (
             <select
               aria-label="Filter by counsellor"
               value={counsellorFilter}
               onChange={(e) => setCounsellorFilter(e.target.value)}
-              className="input-field col-span-3 min-w-0 py-2 sm:col-span-1 sm:max-w-[200px]"
+              className="input-field w-full py-2 sm:w-auto sm:min-w-[160px]"
             >
               <option value="">All counsellors</option>
               <option value="none">Unassigned</option>
@@ -206,7 +210,7 @@ const RegistrationsPage = () => {
             </select>
           )}
           {(fromDate || toDate) && (
-            <button type="button" onClick={() => { setFromDate(''); setToDate(''); }} className="col-span-3 text-[11px] font-bold text-ame-orange hover:text-amber-700 sm:col-span-1">
+            <button type="button" onClick={() => { setFromDate(''); setToDate(''); }} className="text-left text-[11px] font-bold text-ame-orange hover:text-amber-700">
               All dates
             </button>
           )}
