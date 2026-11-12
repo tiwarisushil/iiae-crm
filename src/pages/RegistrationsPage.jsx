@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { ClipboardList, CheckCircle, XCircle, User, Phone, Mail, Award, DollarSign } from 'lucide-react';
+import { ClipboardList, CheckCircle, XCircle, Phone, Mail, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import RegistrationLeadModal from '../components/RegistrationLeadModal';
 import DeleteRecordButton from '../components/DeleteRecordButton';
@@ -23,6 +23,7 @@ const RegistrationsPage = () => {
   const [activeTab, setActiveTab] = useState(location.pathname.endsWith('/paid') ? 'paid' : 'unpaid');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [search, setSearch] = useState('');
   // Unpaid registrations are worked as leads: admin and manager pick each one's counsellor here.
   const canAssign = activeTab === 'unpaid' && ['admin', 'manager'].includes(user?.role);
   const [counsellors, setCounsellors] = useState([]);
@@ -69,7 +70,27 @@ const RegistrationsPage = () => {
     }
   };
 
+  const matchesSearch = (student) => {
+    const query = search.trim().toLowerCase();
+    if (!query) return true;
+    const profile = student.profile || {};
+    const haystack = [
+      student.name,
+      student.email,
+      student.phone,
+      profile.studentId,
+      profile.examPhase,
+      profile.registeredBy?.name,
+      student.lead?.assignedTo?.name,
+      student.lastRemark?.remark,
+    ].join(' ').toLowerCase();
+    if (haystack.includes(query)) return true;
+    const digits = query.replace(/\D/g, '');
+    return digits.length >= 3 && String(student.phone || '').replace(/\D/g, '').includes(digits);
+  };
+
   const visibleStudents = students.filter((student) => {
+    if (!matchesSearch(student)) return false;
     const registered = new Date(student.createdAt);
     if (Number.isNaN(registered.getTime())) return true;
     if (fromDate && registered < new Date(`${fromDate}T00:00:00`)) return false;
@@ -145,7 +166,18 @@ const RegistrationsPage = () => {
             Unpaid<span className="hidden sm:inline"> Registrations</span>
           </button>
         </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-3 sm:flex sm:flex-row">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pb-3 sm:flex sm:flex-wrap sm:justify-end">
+          <div className="relative col-span-3 min-w-0 sm:w-64">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              aria-label="Search registrations"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Name, phone, email, roll no"
+              className="input-field w-full py-2 pl-8"
+            />
+          </div>
           {(phases.phases.length > 0 || phases.hasUnphased) && (
             <select
               aria-label="Filter by exam phase"
@@ -335,7 +367,7 @@ const RegistrationsPage = () => {
                 ) : (
                   <tr>
                     <td colSpan={activeTab === 'unpaid' ? 7 : (canDelete ? 5 : 4)} className="p-8 text-center text-slate-500 font-semibold">
-                      {(fromDate || toDate || counsellorFilter || phaseFilter) ? 'No registrations match these filters.' : (user?.role === 'counsellor' && activeTab === 'unpaid' ? 'No unpaid registrations are assigned to you.' : 'No registrations found in this category.')}
+                      {(search.trim() || fromDate || toDate || counsellorFilter || phaseFilter) ? 'No registrations match these filters.' : (user?.role === 'counsellor' && activeTab === 'unpaid' ? 'No unpaid registrations are assigned to you.' : 'No registrations found in this category.')}
                     </td>
                   </tr>
                 )}

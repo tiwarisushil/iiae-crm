@@ -139,6 +139,48 @@ describe('RegistrationsPage unpaid registrations', () => {
     expect(screen.queryByRole('button', { name: /mark .+ paid/i })).not.toBeInTheDocument();
   });
 
+  it('filters the list by name, phone, email, or roll number', async () => {
+    apiMock.get.mockImplementationOnce(async () => ({ data: [
+      { ...students[0], profile: { registrationFeePaid: false, studentId: 'IIAE/AIAEE/262700002' } },
+      students[1],
+    ] }));
+    renderAt('/dashboard/registrations/unpaid');
+    await screen.findByText('Riya');
+
+    const search = screen.getByLabelText('Search registrations');
+    fireEvent.change(search, { target: { value: 'kabir' } });
+    expect(screen.queryByText('Riya')).not.toBeInTheDocument();
+    expect(screen.getByText('Kabir')).toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: '98765 00001' } });
+    expect(screen.getByText('Riya')).toBeInTheDocument();
+    expect(screen.queryByText('Kabir')).not.toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: '262700002' } });
+    expect(screen.getByText('Riya')).toBeInTheDocument();
+    expect(screen.queryByText('Kabir')).not.toBeInTheDocument();
+
+    fireEvent.change(search, { target: { value: 'nobody' } });
+    expect(screen.getByText('No registrations match these filters.')).toBeInTheDocument();
+  });
+
+  it('searches paid registrations the same way', async () => {
+    apiMock.get.mockImplementation(async (url) => {
+      if (url === '/users?role=student&registrationFeePaid=true') {
+        return { data: [
+          { ...students[0], email: 'riya@example.test', profile: { registrationFeePaid: true, studentId: 'IIAE/AIAEE/1' } },
+          { ...students[1], profile: { registrationFeePaid: true, studentId: 'IIAE/AIAEE/2' } },
+        ] };
+      }
+      throw new Error(`unexpected GET ${url}`);
+    });
+    renderAt('/dashboard/registrations/paid');
+    expect(await screen.findByText('Kabir')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Search registrations'), { target: { value: 'riya@example.test' } });
+    expect(screen.getByText('Riya')).toBeInTheDocument();
+    expect(screen.queryByText('Kabir')).not.toBeInTheDocument();
+  });
+
   it('lets an admin mark a registration paid and removes it from the unpaid list', async () => {
     apiMock.post.mockResolvedValue({ data: { message: 'Registration marked paid', registrationFeePaid: true } });
     renderAt('/dashboard/registrations/unpaid');
